@@ -1,32 +1,5 @@
 import { useForm } from "react-hook-form";
-import styled from "styled-components";
-/*
-import { useState } from "react"; 
-
-function ToDoList() {
-	const [toDo, setToDo] = useState("");
-	const onChange = (event: React.FormEvent<HTMLInputElement>) => {
-		// setToDo(event.currentTarget.value);
-		const {
-			currentTarget: { value },
-		} = event;
-		setToDo(value);
-	};
-	const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-		event.preventDefault();
-		console.log(toDo);
-	};
-
-	return (
-		<div>
-			<form onSubmit={onSubmit}>
-				<input value={toDo} onChange={onChange} placeholder="Write a to do" />
-				<button>✓</button>
-			</form>
-		</div>
-	);
-}
- */
+import { atom, useRecoilState } from "recoil";
 
 /*
 register : form 태그가 갖고있는 속성들을 사용할 수 있게 해준다
@@ -47,85 +20,47 @@ setError : 에러가 발생하는 경우 태그에 옵션(기능)을 설정할 �
 validate : 검사를 위한 조건을 설정할 수 있다
 */
 
-const Form = styled.form`
-	display: flex;
-	flex-direction: column;
-`;
-
 interface IForm {
-	username: string;
-	email: string;
-	password: string;
-	password1: string;
-	extraError?: string;
+	toDo: string;
 }
 
-function ToDoList() {
-	const {
-		register,
-		handleSubmit,
-		formState: { errors },
-		setError,
-	} = useForm<IForm>({
-		defaultValues: { email: "@naver.com" },
-	});
+interface IToDo {
+	id: number;
+	text: string;
+	catagory: "TODO" | "DOING" | "DONE";
+}
 
-	// 1. Password 검사
-	const onValid = (data: IForm) => {
-		if (data.password !== data.password1) {
-			setError("password1", { message: "Password are not the same" }, { shouldFocus: true });
-		}
-		// setError("extraError", { message: "Server offiline" });
+const toDoState = atom<IToDo[]>({
+	key: "toDo",
+	default: [],
+});
+
+function ToDoList() {
+	const [toDos, setToDos] = useRecoilState(toDoState);
+
+	const { register, handleSubmit, setValue } = useForm<IForm>();
+	const handleValid = ({ toDo }: IForm) => {
+		// console.log(data.toDo);
+		setToDos((oldToDos) => [
+			{ text: toDo, id: Date.now(), catagory: "TODO" },
+			...oldToDos,
+		]);
+		setValue("toDo", "");
 	};
-	console.log(errors);
 
 	return (
 		<div>
-			<Form onSubmit={handleSubmit(onValid)}>
+			<form onSubmit={handleSubmit(handleValid)}>
 				<input
-					{...register("username", {
-						required: "Write here",
-						validate: {
-							noNico: (value) => (value.includes("nico") ? "no nico allowed" : true),
-							noNick: (value) => (value.includes("nick") ? "no nick allowed" : true),
-						},
-					})}
-					placeholder="Username"
+					{...register("toDo", { required: "Please write a To Do" })}
 				/>
-				<span>{errors?.username?.message}</span>
-				<input
-					{...register("email", {
-						required: "Write here",
-						pattern: {
-							value: /^[A-Za-z0-9._-]+@naver.com$/,
-							message: "Only naver.com mails allowed",
-						},
-					})}
-					placeholder="Email"
-				/>
-				<span>{errors?.email?.message}</span>
-				<input
-					{...register("password", {
-						required: "Write here",
-						minLength: 5,
-					})}
-					placeholder="Password"
-				/>
-				<span>{errors.password?.message}</span>
-				<input
-					{...register("password1", {
-						required: "Password is required",
-						minLength: {
-							value: 5,
-							message: "Your password is too short",
-						},
-					})}
-					placeholder="Password1"
-				/>
-				<span>{errors.password1?.message}</span>
-				<button>✓</button>
-				{/* <span>{errors?.extraError?.message}</span> */}
-			</Form>
+				<button>Add</button>
+			</form>
+			<ul>
+				{toDos.map((toDo) => (
+					<li key={toDo.id}>{toDo.text}</li>
+				))}
+			</ul>
 		</div>
 	);
 }
