@@ -43,6 +43,8 @@ errors 추출을 위해 formState를 비구조화 → 각 input 태그별 에러
 + : 복수의 수량을 나타냄(a~z & 0~9 & . & _ & - 이중 1개 혹은 여러개의 문자열=OK)
 예 : /^[A-Za-z0-9._-]+@naver.com$/
 
+setError : 에러가 발생하는 경우 태그에 옵션(기능)을 설정할 수 있다
+validate : 검사를 위한 조건을 설정할 수 있다
 */
 
 const Form = styled.form`
@@ -50,34 +52,43 @@ const Form = styled.form`
 	flex-direction: column;
 `;
 
-// 1. type 선언
 interface IForm {
 	username: string;
 	email: string;
 	password: string;
 	password1: string;
+	extraError?: string;
 }
 
-// 2. type 적용
 function ToDoList() {
 	const {
 		register,
 		handleSubmit,
 		formState: { errors },
+		setError,
 	} = useForm<IForm>({
 		defaultValues: { email: "@naver.com" },
 	});
-	const onValid = (data: any) => {
-		console.log(data);
-	};
 
-	// 3. 에러 메세지 노출
+	// 1. Password 검사
+	const onValid = (data: IForm) => {
+		if (data.password !== data.password1) {
+			setError("password1", { message: "Password are not the same" }, { shouldFocus: true });
+		}
+		// setError("extraError", { message: "Server offiline" });
+	};
+	console.log(errors);
+
 	return (
 		<div>
 			<Form onSubmit={handleSubmit(onValid)}>
 				<input
 					{...register("username", {
 						required: "Write here",
+						validate: {
+							noNico: (value) => (value.includes("nico") ? "no nico allowed" : true),
+							noNick: (value) => (value.includes("nick") ? "no nick allowed" : true),
+						},
 					})}
 					placeholder="Username"
 				/>
@@ -113,6 +124,7 @@ function ToDoList() {
 				/>
 				<span>{errors.password1?.message}</span>
 				<button>✓</button>
+				{/* <span>{errors?.extraError?.message}</span> */}
 			</Form>
 		</div>
 	);
